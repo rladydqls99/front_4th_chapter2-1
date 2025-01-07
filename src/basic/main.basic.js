@@ -1,4 +1,4 @@
-import { initialProducts } from './constants/products.js';
+import { ITEM_DISCOUNT_RATE, PRODUCT_LIST } from './constants/constants.js';
 
 let productDropdown,
   addToCartButton,
@@ -56,7 +56,7 @@ function initFlashSaleTimer() {
   setTimeout(function () {
     setInterval(function () {
       let randomProduct =
-        initialProducts[Math.floor(Math.random() * initialProducts.length)];
+        PRODUCT_LIST[Math.floor(Math.random() * PRODUCT_LIST.length)];
       if (Math.random() < 0.3 && randomProduct.stock > 0) {
         randomProduct.price = Math.round(randomProduct.price * 0.8);
         alert('번개세일! ' + randomProduct.name + '이(가) 20% 할인 중입니다!');
@@ -70,7 +70,7 @@ function initRecommendationTimer() {
   setTimeout(function () {
     setInterval(function () {
       if (lastSelectedProduct) {
-        let recommendedProduct = initialProducts.find(function (item) {
+        let recommendedProduct = PRODUCT_LIST.find(function (item) {
           return item.id !== lastSelectedProduct && item.stock > 0;
         });
         if (recommendedProduct) {
@@ -90,11 +90,14 @@ function initRecommendationTimer() {
 
 function updateProductOptions() {
   productDropdown.innerHTML = '';
-  initialProducts.forEach(function (product) {
+  PRODUCT_LIST.forEach((product) => {
     let option = document.createElement('option');
+
     option.value = product.id;
-    option.textContent = product.name + ' - ' + product.price + '원';
+    option.textContent = `${product.name} - ${product.price}원`;
+
     if (product.stock === 0) option.disabled = true;
+
     productDropdown.appendChild(option);
   });
 }
@@ -102,15 +105,16 @@ function updateProductOptions() {
 function calculateCartTotal() {
   cartTotalAmount = 0;
   totalItemQuantity = 0;
+
   let cartItems = cartItemContainer.children;
   let subtotalBeforeDiscount = 0;
 
   for (let i = 0; i < cartItems.length; i++) {
     (function () {
       let currentProduct;
-      for (let j = 0; j < initialProducts.length; j++) {
-        if (initialProducts[j].id === cartItems[i].id) {
-          currentProduct = initialProducts[j];
+      for (let j = 0; j < PRODUCT_LIST.length; j++) {
+        if (PRODUCT_LIST[j].id === cartItems[i].id) {
+          currentProduct = PRODUCT_LIST[j];
           break;
         }
       }
@@ -124,11 +128,7 @@ function calculateCartTotal() {
       subtotalBeforeDiscount += itemSubtotal;
 
       if (itemQuantity >= 10) {
-        if (currentProduct.id === 'p1') itemDiscountRate = 0.1;
-        else if (currentProduct.id === 'p2') itemDiscountRate = 0.15;
-        else if (currentProduct.id === 'p3') itemDiscountRate = 0.2;
-        else if (currentProduct.id === 'p4') itemDiscountRate = 0.05;
-        else if (currentProduct.id === 'p5') itemDiscountRate = 0.25;
+        itemDiscountRate = ITEM_DISCOUNT_RATE[currentProduct.id];
       }
       cartTotalAmount += itemSubtotal * (1 - itemDiscountRate);
     })();
@@ -136,6 +136,7 @@ function calculateCartTotal() {
   let finalDiscountRate = 0;
   finalDiscountRate = calculateFinalDiscount(subtotalBeforeDiscount);
   finalDiscountRate = applyTuesdayDiscount(finalDiscountRate);
+
   updateCartDisplay(finalDiscountRate);
   updateInventoryDisplay();
   updateLoyaltyPoints();
@@ -146,12 +147,12 @@ function calculateFinalDiscount(subtotalBeforeDiscount) {
   if (totalItemQuantity >= 30) {
     let bulkDiscount = cartTotalAmount * 0.25;
     let itemDiscount = subtotalBeforeDiscount - cartTotalAmount;
+
     if (bulkDiscount > itemDiscount) {
       cartTotalAmount = subtotalBeforeDiscount * (1 - 0.25);
       finalDiscountRate = 0.25;
     } else {
-      finalDiscountRate =
-        (subtotalBeforeDiscount - cartTotalAmount) / subtotalBeforeDiscount;
+      finalDiscountRate = itemDiscount / subtotalBeforeDiscount;
     }
   } else {
     finalDiscountRate =
@@ -169,39 +170,43 @@ function applyTuesdayDiscount(finalDiscountRate) {
 }
 
 function updateCartDisplay(discountRate) {
-  cartTotalDisplay.textContent = '총액: ' + Math.round(cartTotalAmount) + '원';
+  cartTotalDisplay.textContent = `총액: ${Math.round(cartTotalAmount)}원`;
+
   if (discountRate > 0) {
     let discountLabel = document.createElement('span');
+
     discountLabel.className = 'text-green-500 ml-2';
-    discountLabel.textContent =
-      '(' + (discountRate * 100).toFixed(1) + '% 할인 적용)';
+    discountLabel.textContent = `(${(discountRate * 100).toFixed(1)}% 할인 적용)`;
+
     cartTotalDisplay.appendChild(discountLabel);
   }
 }
 
 function updateLoyaltyPoints() {
   loyaltyPoints = Math.floor(cartTotalAmount / 1000);
+
   let pointsDisplay = document.getElementById('loyalty-points');
+
   if (!pointsDisplay) {
     pointsDisplay = document.createElement('span');
     pointsDisplay.id = 'loyalty-points';
     pointsDisplay.className = 'text-blue-500 ml-2';
+
     cartTotalDisplay.appendChild(pointsDisplay);
   }
-  pointsDisplay.textContent = '(포인트: ' + loyaltyPoints + ')';
+  pointsDisplay.textContent = `(포인트: ${loyaltyPoints})`;
 }
 
 function updateInventoryDisplay() {
   let statusMessage = '';
-  initialProducts.forEach(function (product) {
+
+  PRODUCT_LIST.forEach((product) => {
     if (product.stock < 5) {
-      statusMessage +=
-        product.name +
-        ': ' +
-        (product.stock > 0
-          ? '재고 부족 (' + product.stock + '개 남음)'
-          : '품절') +
-        '\n';
+      if (product.stock > 0) {
+        statusMessage = `${product.name}: 재고 부족 ('${product.stock}'개 남음`;
+      } else {
+        statusMessage = `${product.name}: 품절`;
+      }
     }
   });
   inventoryStatus.textContent = statusMessage;
@@ -209,29 +214,30 @@ function updateInventoryDisplay() {
 
 initShoppingCart();
 
-addToCartButton.addEventListener('click', function () {
+addToCartButton.addEventListener('click', () => {
   let selectedProductId = productDropdown.value;
-  let selectedProduct = initialProducts.find(function (p) {
+  let selectedProduct = PRODUCT_LIST.find((p) => {
     return p.id === selectedProductId;
   });
+
   if (selectedProduct && selectedProduct.stock > 0) {
     let cartItem = document.getElementById(selectedProduct.id);
+
     if (cartItem) {
       let newQuantity =
         parseInt(cartItem.querySelector('span').textContent.split('x ')[1]) + 1;
+
       if (newQuantity <= selectedProduct.stock) {
         cartItem.querySelector('span').textContent =
-          selectedProduct.name +
-          ' - ' +
-          selectedProduct.price +
-          '원 x ' +
-          newQuantity;
+          `${selectedProduct.name} - ${selectedProduct.price} +원 x ${newQuantity}`;
+
         selectedProduct.stock--;
       } else {
         alert('재고가 부족합니다.');
       }
     } else {
       let newCartItem = document.createElement('div');
+
       newCartItem.id = selectedProduct.id;
       newCartItem.className = 'flex justify-between items-center mb-2';
       newCartItem.innerHTML =
@@ -265,7 +271,7 @@ cartItemContainer.addEventListener('click', function (event) {
   ) {
     let productId = clickedButton.dataset.productId;
     let cartItem = document.getElementById(productId);
-    let product = initialProducts.find(function (p) {
+    let product = PRODUCT_LIST.find(function (p) {
       return p.id === productId;
     });
 
