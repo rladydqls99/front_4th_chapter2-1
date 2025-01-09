@@ -41,6 +41,7 @@ export default [
         },
       ],
       "import/newline-after-import": "error",
+      "react/react-in-jsx-scope": "off"
     },
   },
 

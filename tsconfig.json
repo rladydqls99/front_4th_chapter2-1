@@ -1,0 +1,30 @@
+// tsconfig.json
+{
+  "compilerOptions": {
+
+    /* Language and Environment */
+    "target": "ES6",
+    "allowJs": true,
+    "allowSyntheticDefaultImports": true,
+
+
+    /* Modules */
+    "module": "ES6",
+    "moduleResolution": "Node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+
+    "esModuleInterop": false,
+    "forceConsistentCasingInFileNames": true,
+
+    /* Type Checking */
+    "strict": true,
+
+  },
+  "include": ["src"],
+}
